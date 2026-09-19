@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Inteligente - SITIO  (Google Sheets Connected)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+        .chatgpt-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        .chatgpt-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .chatgpt-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .chatgpt-modal {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .chatgpt-input {
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            transition: all 0.2s ease;
+        }
+        .chatgpt-input:focus {
+            background: #ffffff;
+            border-color: #10a37f;
+            box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.15);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col min-h-screen">
+
+    <header class="chatgpt-header text-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-emerald-500/30 bg-emerald-600 flex items-center justify-center">
+                    <img src="https://images.unsplash.com/photo-1599423300746-b62533397364?q=80&w=120&auto=format&fit=crop" onerror="this.src='https://placehold.co/100x100/10a37f/ffffff?text=SITIO'" alt="SITIO Logo" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                        SITIO <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">Propietarios (Sheets Sync)</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">Panel de Seguimiento Inmobiliario conectado a Google Sheets</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+                <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 shadow-sm">
+                    <i class="fa-solid fa-filter text-emerald-600 mr-2"></i>
+                    <select id="filterAsesor" class="bg-transparent text-slate-800 focus:outline-none cursor-pointer font-medium">
+                        <option value="todos">Todos los Asesores</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 shadow-sm">
+                    <i class="fa-solid fa-tag text-emerald-600 mr-2"></i>
+                    <select id="filterTipo" class="bg-transparent text-slate-800 focus:outline-none cursor-pointer font-medium">
+                        <option value="todos">Todos los Tipos</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 shadow-sm">
+                    <i class="fa-solid fa-circle-notch text-emerald-600 mr-2"></i>
+                    <select id="filterStatus" class="bg-transparent text-slate-800 focus:outline-none cursor-pointer font-medium">
+                        <option value="todos">Todos los Status</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 shadow-sm">
+                    <i class="fa-solid fa-location-dot text-emerald-600 mr-2"></i>
+                    <select id="filterUbicacion" class="bg-transparent text-slate-800 focus:outline-none cursor-pointer font-medium">
+                        <option value="todos">Todas las Ubicaciones</option>
+                    </select>
+                </div>
+
+                <button onclick="syncDataFromSheets()" class="bg-[#10a37f] hover:bg-[#0e906f] text-white font-medium px-4 py-2 rounded-xl text-xs transition shadow-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Sincronizar Sheets</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 overflow-y-auto">
+        
+        <!-- Connection Banner for User Guide -->
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 text-white p-2.5 rounded-xl">
+                    <i class="fa-solid fa-table text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-900">Estado de Conexión con Google Sheets</h3>
+                    <p id="connectionStatusText" class="text-xs text-slate-600">Usando datos locales por defecto. Configura tu URL CSV o Apps Script abajo para sincronizar tu Google Sheets real.</p>
+                </div>
+            </div>
+            <button onclick="openConfigModal()" class="bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-100 font-semibold px-3 py-1.5 rounded-xl text-xs transition shadow-sm">
+                <i class="fa-solid fa-gear mr-1"></i> Configurar Enlace Sheets
+            </button>
+        </div>
+
+        <!-- KPI Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="topKpiGrid">
+            <div class="chatgpt-card rounded-2xl p-4 flex items-center justify-between border-l-4 border-l-emerald-500">
+                <div>
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Propiedades</p>
+                    <h3 id="kpiTotal" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                    <p class="text-xs text-emerald-600 font-medium mt-0.5 flex items-center"><i class="fa-solid fa-database mr-1"></i> En cartera</p>
+                </div>
+                <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl border border-emerald-100">
+                    <i class="fa-solid fa-building text-lg"></i>
+                </div>
+            </div>
+
+            <div class="chatgpt-card rounded-2xl p-4 flex items-center justify-between border-l-4 border-l-teal-500">
+                <div>
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Valor Total Cartera (USD)</p>
+                    <h3 id="kpiValorTotal" class="text-xl font-bold text-slate-900 mt-1">USD $0</h3>
+                    <p class="text-[11px] text-teal-600 font-medium mt-0.5 flex items-center"><i class="fa-solid fa-wallet mr-1"></i> Suma en dólares</p>
+                </div>
+                <div class="bg-teal-50 text-teal-600 p-3 rounded-xl border border-teal-100">
+                    <i class="fa-solid fa-sack-dollar text-lg"></i>
+                </div>
+            </div>
+
+            <div class="chatgpt-card rounded-2xl p-4 flex items-center justify-between border-l-4 border-l-cyan-500">
+                <div>
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Valor Promedio (USD)</p>
+                    <h3 id="kpiValorPromedio" class="text-xl font-bold text-slate-900 mt-1">USD $0</h3>
+                    <p class="text-[11px] text-cyan-600 font-medium mt-0.5 flex items-center"><i class="fa-solid fa-chart-line mr-1"></i> Promedio por prop.</p>
+                </div>
+                <div class="bg-cyan-50 text-cyan-600 p-3 rounded-xl border border-cyan-100">
+                    <i class="fa-solid fa-calculator text-lg"></i>
+                </div>
+            </div>
+
+            <div class="chatgpt-card rounded-2xl p-4 flex items-center justify-between border-l-4 border-l-amber-500">
+                <div>
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Requieren Contacto / Llamar</p>
+                    <h3 id="kpiLlamar" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                    <p class="text-xs text-amber-600 font-medium mt-0.5 flex items-center"><i class="fa-solid fa-phone mr-1"></i> Acción pendiente</p>
+                </div>
+                <div class="bg-amber-50 text-amber-600 p-3 rounded-xl border border-amber-100">
+                    <i class="fa-solid fa-clock text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="chatgpt-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-semibold text-slate-800">Propiedades por Status</h2>
+                    <span class="text-[11px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg font-medium border border-emerald-200">Estado</span>
+                </div>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chatgpt-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-semibold text-slate-800">Propiedades por Tipo</h2>
+                    <span class="text-[11px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg font-medium border border-emerald-200">Categorías</span>
+                </div>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="tipoChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chatgpt-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-semibold text-slate-800">Propiedades por Asesor</h2>
+                    <span class="text-[11px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg font-medium border border-emerald-200">Equipo</span>
+                </div>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="asesorChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional analytics row: Regional Distribution Bar Chart & Commissions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="chatgpt-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-emerald-600"></i> Distribución por Zonas Clave
+                    </h2>
+                    <span class="text-[11px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg font-medium border border-emerald-200">Montevideo, Cd. de la Costa, Atlántida, Maldonado</span>
+                </div>
+                <p class="text-xs text-slate-500 mb-3">Cantidad de propiedades registradas en las principales regiones inmobiliarias.</p>
+                
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="zonaChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chatgpt-card rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-emerald-600"></i> Estimativo Comisiones Asesores (40% de los 6%)
+                    </h3>
+                    <span class="text-[11px] bg-teal-50 text-teal-700 px-2.5 py-1 rounded-lg font-medium border border-teal-200">Conversión a UYU$ (T/C: $41)</span>
+                </div>
+                <p class="text-xs text-slate-500 mb-3">Ejemplo: Casa de USD $100.000 $\rightarrow$ Comisión total 6% ($6.000) $\rightarrow$ 40% para el asesor ($2.400).</p>
+                <div id="comisionesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Dynamic commission cards -->
+                </div>
+            </div>
+        </div>
+
+        <div class="chatgpt-card rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900">Directorio de Propietarios (Sincronizado con Google Sheets)</h2>
+                    <p class="text-xs text-slate-500">Datos leídos directamente de tu estructura existente de Google Sheets</p>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-search"></i>
+                    </span>
+                    <input type="text" id="searchInput" placeholder="Buscar por nombre, ubicación, observaciones..." class="w-full pl-9 pr-4 py-2 chatgpt-input rounded-xl text-xs focus:outline-none text-slate-800 placeholder-slate-400">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-slate-600 text-[11px] font-bold uppercase tracking-wider border-b border-gray-200">
+                            <th class="py-3 px-4">Nombre</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Celular</th>
+                            <th class="py-3 px-4">Ult. Contacto</th>
+                            <th class="py-3 px-4 text-right">Valor (USD)</th>
+                            <th class="py-3 px-4">Ubicación</th>
+                            <th class="py-3 px-4 text-center">Link de ML</th>
+                            <th class="py-3 px-4">Observaciones</th>
+                            <th class="py-3 px-4">Tipo</th>
+                            <th class="py-3 px-4">Asesor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-100 text-xs">
+                        <!-- Dynamic rows matching Google Sheets structure -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-white/90 backdrop-blur-xl p-2 rounded-2xl shadow-xl border border-gray-200">
+        <span class="text-xs font-semibold text-slate-600 px-2 hidden sm:inline"><i class="fa-solid fa-bolt mr-1 text-emerald-600"></i> Accesos:</span>
+        <button onclick="openGeminiModal()" class="bg-[#10a37f] hover:bg-[#0e906f] text-white font-medium px-3 py-2 rounded-xl text-xs transition shadow-sm flex items-center space-x-1.5" title="Preguntar a Gemini AI">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Preguntar a Gemini</span>
+        </button>
+        <a href="https://inmobiliariasitio.com.uy" target="_blank" rel="noopener noreferrer" class="bg-gray-100 hover:bg-gray-200 text-slate-700 font-medium px-3 py-2 rounded-xl text-xs transition flex items-center space-x-1.5" title="Sitio Web Oficial">
+            <i class="fa-solid fa-globe text-emerald-600"></i>
+            <span>Web SITIO</span>
+        </a>
+        <a href="https://www.mercadolibre.com.uy" target="_blank" rel="noopener noreferrer" class="bg-amber-50 hover:bg-amber-100 text-amber-900 font-medium px-3 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 border border-amber-200" title="Mercado Libre Inmuebles">
+            <i class="fa-solid fa-handshake text-amber-600"></i>
+            <span>Mercado Libre</span>
+        </a>
+        <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" class="bg-gray-100 hover:bg-gray-200 text-slate-700 font-medium px-3 py-2 rounded-xl text-xs transition flex items-center space-x-1.5" title="Facebook Marketplace">
+            <i class="fa-brands fa-facebook text-blue-600"></i>
+            <span>Facebook</span>
+        </a>
+        <a href="https://www.tokkobroker.com" target="_blank" rel="noopener noreferrer" class="bg-gray-100 hover:bg-gray-200 text-slate-700 font-medium px-3 py-2 rounded-xl text-xs transition flex items-center space-x-1.5" title="Tokko Broker CRM">
+            <i class="fa-solid fa-building text-emerald-600"></i>
+            <span>Tokko Broker</span>
+        </a>
+    </div>
+
+    <div id="configModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="chatgpt-modal rounded-3xl max-w-lg w-full p-6 shadow-2xl transform transition-all text-slate-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-link text-[#10a37f]"></i> Conectar con Google Sheets
+                </h3>
+                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-700 text-base"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Para conectar este dashboard con tu Google Sheets existente:
+                </p>
+                <ol class="list-decimal list-inside text-xs text-slate-600 space-y-1 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <li>En tu Google Sheets, ve a <b>Archivo > Compartir > Publicar en la web</b>.</li>
+                    <li>Selecciona tu pestaña de propietarios y elige formato <b>Valores separados por comas (.csv)</b>.</li>
+                    <li>Copia el enlace generado y pégalo abajo.</li>
+                </ol>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">URL de exportación CSV de Google Sheets</label>
+                    <input type="text" id="sheetsCsvUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv" class="w-full px-3 py-2 chatgpt-input rounded-xl text-xs focus:outline-none">
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeConfigModal()" class="px-4 py-2 border border-gray-200 text-slate-600 rounded-xl text-xs hover:bg-gray-50 font-medium transition">Cancelar</button>
+                    <button type="button" onclick="saveAndSyncSheetsUrl()" class="px-4 py-2 bg-[#10a37f] hover:bg-[#0e906f] text-white rounded-xl text-xs shadow-sm font-medium transition">Conectar y Sincronizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="geminiModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="chatgpt-modal rounded-3xl max-w-lg w-full p-6 shadow-2xl transform transition-all text-slate-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-[#10a37f]"></i> Asistente SITIO con Gemini AI
+                </h3>
+                <button onclick="closeGeminiModal()" class="text-slate-400 hover:text-slate-700 text-base"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-xs text-slate-500">Pregúntale lo que necesites sobre tu base de datos de Google Sheets:</p>
+                <div class="flex gap-2">
+                    <input type="text" id="geminiQueryInput" placeholder="Ej: ¿Cuáles propiedades requieren llamada urgente?" class="flex-1 px-3 py-2 chatgpt-input rounded-xl text-xs focus:outline-none">
+                    <button onclick="askGeminiAI()" class="bg-[#10a37f] hover:bg-[#0e906f] text-white px-4 py-2 rounded-xl text-xs font-semibold transition">Consultar</button>
+                </div>
+                <div id="geminiResponseBox" class="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-slate-700 min-h-[120px] max-h-[220px] overflow-y-auto">
+                    <span class="text-slate-400 italic">La respuesta de Gemini aparecerá aquí...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50 text-xs font-medium">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastText">Operación realizada con éxito</span>
+    </div>
+
+    <script>
+        let database = [
+            { nombre: 'Martin', status: 'Llamar', celular: '098 401 655', ultContacto: '', valor: '28500', ubicacion: 'Santa Ana', enlace: 'https://www.mercadolibre.com.uy', observaciones: 'Documentacion en regla', tipo: 'Terreno', asesor: 'Emiliano' },
+            { nombre: 'Rossy', status: 'Llamar 1 mes aprox', celular: '099 183 967', ultContacto: '', valor: '630000', ubicacion: 'Charrua 2603 Pocitos', enlace: 'https://www.mercadolibre.com.uy', observaciones: 'casa 2 plantas', tipo: 'Casa', asesor: 'Mariano' },
+            { nombre: 'Laura', status: 'Llamar', celular: '095 325 287', ultContacto: '', valor: '175000', ubicacion: 'Benito blanco 3346 Pocitos', enlace: 'https://www.mercadolibre.com.uy', observaciones: '2 dorm', tipo: 'Terreno', asesor: 'Mariano' },
+            { nombre: 'Guillermo', status: '', celular: '094 564 189', ultContacto: '', valor: '70000', ubicacion: 'Atlantida', enlace: 'https://www.mercadolibre.com.uy', observaciones: '5 Hectareas', tipo: 'Chacra', asesor: 'Emiliano' },
+            { nombre: 'Mariano', status: 'Llamar', celular: '099 093 028', ultContacto: '', valor: '175000', ubicacion: 'porongos 2542, Goes', enlace: 'https://www.mercadolibre.com.uy', observaciones: 'casa padron unico', tipo: 'Casa', asesor: 'Mariano' },
+            { nombre: 'Valeria', status: 'En gestión', celular: '091 223 445', ultContacto: '10/09/2026', valor: '120000', ubicacion: 'Malvin, Montevideo', enlace: 'https://www.mercadolibre.com.uy', observaciones: 'Excelente vista', tipo: 'Apartamento', asesor: 'Emiliano' }
+        ];
+
+        const EXCHANGE_RATE_UYU = 41.0; 
+
+        let statusChartInstance = null;
+        let tipoChartInstance = null;
+        let asesorChartInstance = null;
+        let zonaChartInstance = null;
+
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+        const filterAsesor = document.getElementById('filterAsesor');
+        const filterTipo = document.getElementById('filterTipo');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterUbicacion = document.getElementById('filterUbicacion');
+
+        searchInput.addEventListener('input', renderDashboard);
+        filterAsesor.addEventListener('change', renderDashboard);
+        filterTipo.addEventListener('change', renderDashboard);
+        filterStatus.addEventListener('change', renderDashboard);
+        filterUbicacion.addEventListener('change', renderDashboard);
+
+        window.onload = function() {
+            const savedUrl = localStorage.getItem('sitio_sheets_url');
+            if (savedUrl) {
+                document.getElementById('sheetsCsvUrlInput').value = savedUrl;
+                fetchGoogleSheetsData(savedUrl);
+            } else {
+                populateFilters();
+                renderDashboard();
+            }
+        };
+
+        function parseNumericValor(valStr) {
+            if (!valStr) return 0;
+            const cleaned = String(valStr).replace(/[^0-9.,]/g, '').replace(',', '.');
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function populateFilters() {
+            const asesores = [...new Set(database.map(i => i.asesor).filter(Boolean))];
+            const tipos = [...new Set(database.map(i => i.tipo).filter(Boolean))];
+            const statuses = [...new Set(database.map(i => i.status).filter(Boolean))];
+            const ubicaciones = [...new Set(database.map(i => i.ubicacion).filter(Boolean))];
+
+            fillSelect(filterAsesor, asesores, 'Todos los Asesores');
+            fillSelect(filterTipo, tipos, 'Todos los Tipos');
+            fillSelect(filterStatus, statuses, 'Todos los Status');
+            fillSelect(filterUbicacion, ubicaciones, 'Todas las Ubicaciones');
+        }
+
+        function fillSelect(selectEl, items, defaultText) {
+            const currentVal = selectEl.value;
+            selectEl.innerHTML = `<option value="todos">${defaultText}</option>`;
+            items.sort().forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                selectEl.appendChild(opt);
+            });
+            selectEl.value = currentVal || 'todos';
+        }
+
+        function getFilteredData() {
+            const search = searchInput.value.toLowerCase();
+            const asesorVal = filterAsesor.value;
+            const tipoVal = filterTipo.value;
+            const statusVal = filterStatus.value;
+            const ubicacionVal = filterUbicacion.value;
+
+            return database.filter(item => {
+                const matchSearch = (item.nombre && item.nombre.toLowerCase().includes(search)) ||
+                                    (item.ubicacion && item.ubicacion.toLowerCase().includes(search)) ||
+                                    (item.observaciones && item.observaciones.toLowerCase().includes(search)) ||
+                                    (item.celular && item.celular.toLowerCase().includes(search));
+                
+                const matchAsesor = asesorVal === 'todos' || item.asesor === asesorVal;
+                const matchTipo = tipoVal === 'todos' || item.tipo === tipoVal;
+                const matchStatus = statusVal === 'todos' || item.status === statusVal;
+                const matchUbicacion = ubicacionVal === 'todos' || item.ubicacion === ubicacionVal;
+
+                return matchSearch && matchAsesor && matchTipo && matchStatus && matchUbicacion;
+            });
+        }
+
+        function renderDashboard() {
+            const data = getFilteredData();
+            
+            tableBody.innerHTML = '';
+            if (data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-slate-400 italic">No se encontraron registros coincidentes.</td></tr>`;
+            } else {
+                data.forEach(item => {
+                    let badgeColor = 'bg-gray-100 text-slate-700';
+                    const st = (item.status || '').toLowerCase();
+                    if (st.includes('llamar')) badgeColor = 'bg-amber-50 text-amber-700 border border-amber-200';
+                    else if (st.includes('gestión') || st.includes('gestion')) badgeColor = 'bg-teal-50 text-teal-700 border border-teal-200';
+                    else if (st.includes('captado')) badgeColor = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+
+                    const numVal = parseNumericValor(item.valor);
+
+                    let linkHtml = '<span class="text-slate-300">-</span>';
+                    const targetUrl = (item.enlace && item.enlace.trim() !== '' && item.enlace !== 'Click aqui') ? item.enlace : 'https://www.mercadolibre.com.uy';
+                    linkHtml = `<a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100 font-semibold text-[11px] transition shadow-sm"><i class="fa-solid fa-handshake text-amber-600"><span>Link de ML</span></a>`;
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50/80 transition';
+                    tr.innerHTML = `
+                        <td class="py-3 px-4 font-semibold text-slate-900">${item.nombre || 'Sin nombre'}</td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-lg text-[11px] font-bold ${badgeColor}">${item.status || 'Sin status'}</span></td>
+                        <td class="py-3 px-4 text-slate-600 font-mono text-[11px]">${item.celular || '-'}</td>
+                        <td class="py-3 px-4 text-slate-500 text-[11px]">${item.ultContacto || 'Sin registro'}</td>
+                        <td class="py-3 px-4 text-right font-mono font-bold text-slate-900">USD $${Math.round(numVal).toLocaleString()}</td>
+                        <td class="py-3 px-4 text-slate-500 text-[11px]">${item.ubicacion || '-'}</td>
+                        <td class="py-3 px-4 text-center">${linkHtml}</td>
+                        <td class="py-3 px-4 text-slate-500 text-[11px]">${item.observaciones || '-'}</td>
+                        <td class="py-3 px-4 text-slate-700">${item.tipo || 'Sin tipo'}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[11px] font-semibold">${item.asesor || 'Sin asignar'}</span></td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            const totalCount = data.length;
+            let totalValUSD = 0;
+            data.forEach(item => {
+                totalValUSD += parseNumericValor(item.valor);
+            });
+            const avgValUSD = totalCount > 0 ? totalValUSD / totalCount : 0;
+            const callCount = data.filter(i => i.status && i.status.toLowerCase().includes('llamar')).length;
+
+            document.getElementById('kpiTotal').innerText = totalCount;
+            document.getElementById('kpiValorTotal').innerText = 'USD $' + Math.round(totalValUSD).toLocaleString();
+            document.getElementById('kpiValorPromedio').innerText = 'USD $' + Math.round(avgValUSD).toLocaleString();
+            document.getElementById('kpiLlamar').innerText = callCount;
+
+            renderCharts(data);
+            renderCommissions(data);
+        }
+
+        function renderCommissions(data) {
+            const comContainer = document.getElementById('comisionesContainer');
+            comContainer.innerHTML = '';
+
+            const asesoresMap = {};
+            data.forEach(item => {
+                const asesorName = item.asesor || 'Sin asignar';
+                if (!asesoresMap[asesorName]) {
+                    asesoresMap[asesorName] = { count: 0, totalValorUSD: 0 };
+                }
+                asesoresMap[asesorName].count++;
+                asesoresMap[asesorName].totalValorUSD += parseNumericValor(item.valor);
+            });
+
+            if (Object.keys(asesoresMap).length === 0) {
+                comContainer.innerHTML = `<div class="col-span-2 text-center text-xs text-slate-400">No hay datos para calcular comisiones.</div>`;
+                return;
+            }
+
+            for (const [asesor, info] of Object.entries(asesoresMap)) {
+                // Calculation: Total USD -> 6% total commission -> 40% for the advisor -> converted to UYU at rate 41
+                const totalValorUYU = info.totalValorUSD * EXCHANGE_RATE_UYU;
+                const comisionGananciaUYU = totalValorUYU * 0.06 * 0.40;
+
+                const card = document.createElement('div');
+                card.className = 'bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-slate-900 text-xs"><i class="fa-solid fa-user-tie text-[#10a37f] mr-1"></i> ${asesor}</span>
+                        <span class="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-semibold">${info.count} prop.</span>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs text-slate-500">
+                            <span>Cartera (USD):</span>
+                            <span class="font-mono font-bold text-slate-800">USD $${Math.round(info.totalValorUSD).toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold text-slate-900 border-t border-gray-200 pt-1">
+                            <span>Comisión Asesor (40% de 6%):</span>
+                            <span class="font-mono text-[#10a37f]">UYU$ ${Math.round(comisionGananciaUYU).toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+                comContainer.appendChild(card);
+            }
+        }
+
+        function renderCharts(data) {
+            const statusCounts = {};
+            data.forEach(item => {
+                const st = item.status && item.status.trim() !== '' ? item.status : 'Sin status';
+                statusCounts[st] = (statusCounts[st] || 0) + 1;
+            });
+
+            const ctxStatus = document.getElementById('statusChart').getContext('2d');
+            if (statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts),
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: ['#10a37f', '#14b8a6', '#f59e0b', '#34d399', '#6ee7b7', '#e5e7eb'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+                }
+            });
+
+            const tipoCounts = {};
+            data.forEach(item => {
+                const tp = item.tipo && item.tipo.trim() !== '' ? item.tipo : 'Sin tipo';
+                tipoCounts[tp] = (tipoCounts[tp] || 0) + 1;
+            });
+
+            const ctxTipo = document.getElementById('tipoChart').getContext('2d');
+            if (tipoChartInstance) tipoChartInstance.destroy();
+            tipoChartInstance = new Chart(ctxTipo, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(tipoCounts),
+                    datasets: [{
+                        data: Object.values(tipoCounts),
+                        backgroundColor: ['#0d9488', '#34d399', '#10a37f', '#a7f3d0', '#6ee7b7'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+                }
+            });
+
+            const asesorCounts = {};
+            data.forEach(item => {
+                const asr = item.asesor && item.asesor.trim() !== '' ? item.asesor : 'Sin asignar';
+                asesorCounts[asr] = (asesorCounts[asr] || 0) + 1;
+            });
+
+            const ctxAsesor = document.getElementById('asesorChart').getContext('2d');
+            if (asesorChartInstance) asesorChartInstance.destroy();
+            asesorChartInstance = new Chart(ctxAsesor, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(asesorCounts),
+                    datasets: [{
+                        label: 'Propiedades',
+                        data: Object.values(asesorCounts),
+                        backgroundColor: '#10a37f',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+
+            const zonaCounts = {
+                'Montevideo': 0,
+                'Ciudad de la Costa': 0,
+                'Atlántida': 0,
+                'Maldonado': 0
+            };
+
+            data.forEach(item => {
+                const loc = (item.ubicacion || '').toLowerCase();
+                if (loc.includes('montevideo') || loc.includes('pocitos') || loc.includes('goes') || loc.includes('malvin') || loc.includes('centro')) {
+                    zonaCounts['Montevideo']++;
+                } else if (loc.includes('ciudad de la costa') || loc.includes('solymar') || loc.includes('lagomar') || loc.includes('el pinar')) {
+                    zonaCounts['Ciudad de la Costa']++;
+                } else if (loc.includes('atlantida') || loc.includes('atlántida') || loc.includes('santa ana')) {
+                    zonaCounts['Atlántida']++;
+                } else if (loc.includes('maldonado') || loc.includes('punta del este') || loc.includes('punta ballena')) {
+                    zonaCounts['Maldonado']++;
+                } else {
+                    zonaCounts['Montevideo']++;
+                }
+            });
+
+            const ctxZona = document.getElementById('zonaChart').getContext('2d');
+            if (zonaChartInstance) zonaChartInstance.destroy();
+            zonaChartInstance = new Chart(ctxZona, {
+                type: 'bar',
+                data: {
+                    labels: ['Montevideo', 'Ciudad de la Costa', 'Atlántida', 'Maldonado'],
+                    datasets: [{
+                        label: 'Propiedades',
+                        data: [zonaCounts['Montevideo'], zonaCounts['Ciudad de la Costa'], zonaCounts['Atlántida'], zonaCounts['Maldonado']],
+                        backgroundColor: ['#10a37f', '#14b8a6', '#0d9488', '#f59e0b'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        function openConfigModal() {
+            document.getElementById('configModal').classList.remove('hidden');
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').classList.add('hidden');
+        }
+
+        function saveAndSyncSheetsUrl() {
+            const url = document.getElementById('sheetsCsvUrlInput').value.trim();
+            if (!url) {
+                showToast('Por favor ingresa una URL válida');
+                return;
+            }
+            localStorage.setItem('sitio_sheets_url', url);
+            closeConfigModal();
+            fetchGoogleSheetsData(url);
+        }
+
+        function syncDataFromSheets() {
+            const savedUrl = localStorage.getItem('sitio_sheets_url');
+            if (!savedUrl) {
+                openConfigModal();
+                return;
+            }
+            fetchGoogleSheetsData(savedUrl);
+        }
+
+        async function fetchGoogleSheetsData(csvUrl) {
+            showToast('Sincronizando con Google Sheets...');
+            try {
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                parseCSV(csvText);
+                document.getElementById('connectionStatusText').innerHTML = `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> Conectado y sincronizado correctamente con Google Sheets.</span>`;
+                showToast('¡Datos sincronizados desde Google Sheets!');
+            } catch (err) {
+                console.error(err);
+                document.getElementById('connectionStatusText').innerHTML = `<span class="text-rose-600 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error al conectar (revisa que la hoja esté publicada como CSV).</span>`;
+                showToast('Error al conectar. Usando datos actuales.');
+            }
+        }
+
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            if (lines.length < 2) return;
+
+            const newDatabase = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const row = [];
+                let inQuotes = false;
+                let currentVal = '';
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        row.push(currentVal.trim().replace(/^"|"$/g, ''));
+                        currentVal = '';
+                    } else {
+                        currentVal += char;
+                    }
+                }
+                row.push(currentVal.trim().replace(/^"|"$/g, ''));
+
+                if (row.length >= 1) {
+                    newDatabase.push({
+                        nombre: row[0] || '',
+                        status: row[1] || '',
+                        celular: row[2] || '',
+                        ultContacto: row[3] || '',
+                        valor: row[4] || '0',
+                        ubicacion: row[5] || '',
+                        enlace: row[6] || '',
+                        observaciones: row[7] || '',
+                        tipo: row[8] || '',
+                        asesor: row[9] || ''
+                    });
+                }
+            }
+
+            if (newDatabase.length > 0) {
+                database = newDatabase;
+                populateFilters();
+                renderDashboard();
+            }
+        }
+
+        function openGeminiModal() {
+            document.getElementById('geminiModal').classList.remove('hidden');
+        }
+
+        function closeGeminiModal() {
+            document.getElementById('geminiModal').classList.add('hidden');
+        }
+
+        async function askGeminiAI() {
+            const query = document.getElementById('geminiQueryInput').value.trim();
+            const respBox = document.getElementById('geminiResponseBox');
+            if (!query) return;
+
+            respBox.innerHTML = `<span class="text-emerald-600 animate-pulse"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Consultando a Gemini AI...</span>`;
+
+            try {
+                const systemPrompt = "Eres un analista inmobiliario experto asistente del panel SITIO Propietarios. Responde de forma concisa y profesional basándote en los datos de la base.";
+                const contextData = JSON.stringify(database);
+                const fullPrompt = `${query}\n\nDatos actuales de la base:\n${contextData}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: fullPrompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                };
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "No se pudo obtener una respuesta en este momento.";
+                respBox.innerHTML = `<p class="text-slate-800 leading-relaxed">${text}</p>`;
+            } catch (err) {
+                respBox.innerHTML = `<span class="text-rose-600">Error al conectar con Gemini AI. Intenta nuevamente.</span>`;
+            }
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastText').innerText = text;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
